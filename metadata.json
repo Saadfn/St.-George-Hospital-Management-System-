@@ -1,0 +1,5 @@
+{
+  "name": "St. George Hospital HMS",
+  "description": "A centralized healthcare management system for St. George Hospital, featuring role-based dashboards for Admins, Doctors, and Patients, integrated with AI assistance.",
+  "requestFramePermissions": []
+}
