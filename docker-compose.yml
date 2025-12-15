@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  st-george-hms:
+    build: .
+    container_name: st-george-hospital
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
