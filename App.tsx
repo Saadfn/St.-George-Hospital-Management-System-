@@ -1,22 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Role,
+  UserRole,
   User,
-  Appointment,
   Branch,
   MedicalRecord,
-  Doctor,
-  Patient,
-  Ward,
-  Admission,
-  Medicine,
-  LabTest,
-  Invoice,
-  ViewType
+  ViewType,
+  DashboardStats,
+  SPECIALIZATIONS
 } from './types';
-import { api } from './services/api';
-import { SPECIALTIES, APPOINTMENT_TYPES, TEST_TYPES } from './services/mockData';
+import {
+  api,
+  DoctorWithDetails,
+  PatientWithDetails,
+  AppointmentWithDetails,
+  LabTestWithDetails,
+  InventoryWithDetails,
+  AdmissionWithDetails,
+  BillWithDetails
+} from './services/api';
+import { APPOINTMENT_TYPES, TEST_TYPES } from './services/mockData';
 import { AIAssistant } from './components/AIAssistant';
+
+// Type aliases for backward compatibility
+type Doctor = DoctorWithDetails;
+type Patient = PatientWithDetails;
+type Appointment = AppointmentWithDetails;
+type LabTest = LabTestWithDetails;
+type Medicine = InventoryWithDetails;
+type Admission = AdmissionWithDetails;
+type Invoice = BillWithDetails;
+type Ward = { id: string; name: string; branchId: string; type: string; totalBeds: number; occupiedBeds: number };
+
+// Use SPECIALIZATIONS as SPECIALTIES
+const SPECIALTIES = SPECIALIZATIONS;
 
 // Icons as components
 const Icons = {
@@ -1317,10 +1333,10 @@ const BillingManagement = () => {
 };
 
 // Login Screen
-const LoginScreen = ({ onLogin }: { onLogin: (role: Role) => void }) => {
-  const [loading, setLoading] = useState<Role | null>(null);
+const LoginScreen = ({ onLogin }: { onLogin: (role: UserRole) => void }) => {
+  const [loading, setLoading] = useState<UserRole | null>(null);
 
-  const handleLogin = async (role: Role) => {
+  const handleLogin = async (role: UserRole) => {
     setLoading(role);
     try {
       await onLogin(role);
@@ -1331,10 +1347,10 @@ const LoginScreen = ({ onLogin }: { onLogin: (role: Role) => void }) => {
   };
 
   const roleConfig = {
-    [Role.ADMIN]: { icon: <Icons.Settings />, desc: 'System administration' },
-    [Role.DOCTOR]: { icon: <Icons.User />, desc: 'Medical staff portal' },
-    [Role.PATIENT]: { icon: <Icons.Heart />, desc: 'Patient self-service' },
-    [Role.STAFF]: { icon: <Icons.Users />, desc: 'Hospital operations' },
+    [UserRole.ADMIN]: { icon: <Icons.Settings />, desc: 'System administration' },
+    [UserRole.DOCTOR]: { icon: <Icons.User />, desc: 'Medical staff portal' },
+    [UserRole.PATIENT]: { icon: <Icons.Heart />, desc: 'Patient self-service' },
+    [UserRole.STAFF]: { icon: <Icons.Users />, desc: 'Hospital operations' },
   };
 
   return (
@@ -1349,23 +1365,23 @@ const LoginScreen = ({ onLogin }: { onLogin: (role: Role) => void }) => {
         </div>
 
         <div className="space-y-4">
-          {(Object.keys(Role) as Array<keyof typeof Role>).map((key) => (
+          {(Object.keys(UserRole) as Array<keyof typeof UserRole>).map((key) => (
             <button
               key={key}
-              onClick={() => handleLogin(Role[key])}
+              onClick={() => handleLogin(UserRole[key])}
               disabled={loading !== null}
-              className={`w-full group relative flex items-center p-4 border border-slate-200 rounded-xl hover:border-primary hover:shadow-md transition-all ${loading === Role[key] ? 'bg-slate-50' : 'bg-white'}`}
+              className={`w-full group relative flex items-center p-4 border border-slate-200 rounded-xl hover:border-primary hover:shadow-md transition-all ${loading === UserRole[key] ? 'bg-slate-50' : 'bg-white'}`}
             >
               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-sky-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                {roleConfig[Role[key]].icon}
+                {roleConfig[UserRole[key]].icon}
               </div>
               <div className="ml-4 text-left">
                 <p className="text-sm font-medium text-slate-900 group-hover:text-primary transition-colors">
                   {key.charAt(0) + key.slice(1).toLowerCase()}
                 </p>
-                <p className="text-xs text-slate-500">{roleConfig[Role[key]].desc}</p>
+                <p className="text-xs text-slate-500">{roleConfig[UserRole[key]].desc}</p>
               </div>
-              {loading === Role[key] && (
+              {loading === UserRole[key] && (
                 <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
               )}
             </button>
@@ -1412,9 +1428,9 @@ const Sidebar = ({ user, currentView, onNavigate, onLogout }: { user: User; curr
     { view: 'medical-records' as ViewType, label: 'Medical Records', icon: <Icons.FileText /> },
   ];
 
-  const navItems = user.role === Role.ADMIN ? adminNav :
-                   user.role === Role.STAFF ? staffNav :
-                   user.role === Role.DOCTOR ? doctorNav : patientNav;
+  const navItems = user.role === UserRole.ADMIN ? adminNav :
+                   user.role === UserRole.STAFF ? staffNav :
+                   user.role === UserRole.DOCTOR ? doctorNav : patientNav;
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
@@ -1464,7 +1480,7 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
 
-  const handleLogin = async (role: Role) => {
+  const handleLogin = async (role: UserRole) => {
     const userData = await api.auth.login(role);
     setUser(userData);
     setCurrentView('dashboard');
@@ -1486,9 +1502,9 @@ const App = () => {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        if (user.role === Role.ADMIN) return <AdminDashboard />;
-        if (user.role === Role.DOCTOR) return <DoctorDashboard user={user} />;
-        if (user.role === Role.STAFF) return <StaffDashboard onNavigate={handleNavigate} />;
+        if (user.role === UserRole.ADMIN) return <AdminDashboard />;
+        if (user.role === UserRole.DOCTOR) return <DoctorDashboard user={user} />;
+        if (user.role === UserRole.STAFF) return <StaffDashboard onNavigate={handleNavigate} />;
         return <PatientDashboard user={user} onNavigate={handleNavigate} />;
       case 'book-appointment':
         return <BookAppointment onBack={() => handleNavigate('dashboard')} />;
